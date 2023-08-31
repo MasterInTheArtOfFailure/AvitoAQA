@@ -1,12 +1,10 @@
 package org.example;
 
-import junit.framework.TestCase;
-
-import org.openqa.selenium.By;
+import org.junit.FixMethodOrder;
+import org.junit.runners.MethodSorters;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
@@ -15,8 +13,8 @@ import pages.ItemPage;
 
 import java.time.Duration;
 
-
-public class AvitoTest extends TestCase {
+@FixMethodOrder(MethodSorters.JVM)
+public class AvitoTest {
     private WebDriver driver;
     private ItemPage page;
 
@@ -28,10 +26,24 @@ public class AvitoTest extends TestCase {
     }
 
     @BeforeMethod
-    public void openLandingPage() {
+    public void setUpLandingPage() {
         driver.get(page.getUrl());
-        //driver.manage().window().maximize();
+        driver.manage().window().maximize();
         new WebDriverWait(driver, Duration.ofSeconds(3));
+    }
+
+    @AfterMethod
+    public void quitChrome() {
+        driver.close();
+        driver.quit();
+    }
+
+    @Test
+    public void checkChangeOfColorHovering() {
+        String colorBeforeHover = page.getBackgroundColor();
+        page.hoverOverFavoritesButton();
+        String colorAfterHover = page.getBackgroundColor();
+        Assert.assertNotEquals(colorAfterHover, colorBeforeHover);
     }
 
     @Test
@@ -41,19 +53,36 @@ public class AvitoTest extends TestCase {
     }
 
     @Test
-    @Ignore
-    public void checkChangeOfColorHovering() {
-        WebElement colorOfButton = driver.findElement(By.xpath("//button[@title = 'Добавить в избранное']"));
-        String propertyName = "background-color";
-        String colorBeforeHover = colorOfButton.getCssValue(propertyName);
-        Actions actions = new Actions(driver);
-        actions.moveToElement(colorOfButton).perform();
-        String colorAfterHover = colorOfButton.getCssValue(propertyName);
-        Assert.assertNotEquals(colorAfterHover, colorBeforeHover);
+    public void checkHeartIconChange() {
+        page.clickOnFavoritesButton();
+
+        WebElement icon = driver.findElement(page.getFavoritesHeartIcon());
+
+        Assert.assertEquals(icon.getAttribute("data-icon"), "favorites-filled");
     }
 
     @Test
-    @Ignore
+    public void checkInfoPopup() {
+        page.clickOnFavoritesButton();
+
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        WebElement popup = wait.until(ExpectedConditions.presenceOfElementLocated(page.getInfoPopup()));
+        Assert.assertTrue(popup.isDisplayed());
+        Assert.assertEquals(popup.getText(), "Добавлено в избранное");
+    }
+
+    @Test
+    public void checkLinkInsidePopup() {
+        page.clickOnFavoritesButton();
+
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        wait.until(ExpectedConditions.presenceOfElementLocated(page.getInfoPopup()));
+        WebElement link = driver.findElement(page.getLinkInsidePopup());
+        Assert.assertEquals(link.getAttribute("href"), "https://www.avito.ru/favorites/knigi_i_zhurnaly");
+    }
+}
+
+    @Test
     public void checkHeartIconChange() {
         page.clickOnFavoritesButton();
 
@@ -63,7 +92,6 @@ public class AvitoTest extends TestCase {
     }
 
     @Test
-    @Ignore
     public void infoPopup() {
         page.clickOnFavoritesButton();
 
@@ -80,12 +108,5 @@ public class AvitoTest extends TestCase {
     public void quitChrome() {
         driver.quit();
     }
-
-    @Test
-    @Ignore
-    public void addToFavouritesFromSearchBar() {
-        WebElement searchBar ;
-    }
-
 }
 
